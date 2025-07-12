@@ -1,13 +1,13 @@
 # REPO_IAgen
-Catálogo de Diseñadores de Moda 👗✨
+# **Catálogo de Diseñadores de Moda 👗✨**
 
 ![alt text](image-1.png)
 
-Descripción del Proyecto 🚀
+## **Descripción del Proyecto** 🚀
 Este proyecto es una aplicación completa que permite explorar y gestionar un catálogo de diseñadores de moda. Combina una API robusta construida con Flask, una base de datos PostgreSQL para el almacenamiento de datos, integración con un Modelo de Lenguaje Grande (LLM) a través de Groq para funcionalidades de IA, y una interfaz de usuario interactiva desarrollada con Streamlit. Todo el sistema está diseñado para ser fácilmente desplegable y gestionable utilizando Docker y Docker Compose.
 
-Características Principales 🌟
-API RESTful con Flask: 🌐
+### **Características Principales** 🌟
+**API RESTful con Flask**: 🌐
 
 Obtención de todos los diseñadores. 🧑‍🎨
 
@@ -23,23 +23,23 @@ Registro histórico de las interacciones con el LLM en la base de datos. 📝
 
 Consulta del historial de interacciones del LLM. 📜
 
-Base de Datos PostgreSQL: 🗄️
+**Base de Datos PostgreSQL**: 🗄️
 
 Almacenamiento persistente de la información de los diseñadores.
 
 Registro de las consultas y respuestas del LLM.
 
-Integración con LLM (Groq): 🤖
+**Integración con LLM (Groq)**: 🤖
 
 Utiliza modelos de lenguaje pre-entrenados para generar respuestas basadas en prompts de usuario.
 
-Aplicación Web con Streamlit: 🖥️
+**Aplicación Web con Streamlit**: 🖥️
 
 Interfaz de usuario intuitiva para visualizar y buscar diseñadores.
 
 Conecta con la API de Flask para obtener y mostrar los datos.
 
-Dockerización: 🐳
+**Dockerización**: 🐳
 
 Contenedorización de la API de Flask y la base de datos PostgreSQL para un despliegue y ejecución consistentes en cualquier entorno.
 
@@ -62,7 +62,7 @@ Contenedorización: Docker, Docker Compose 🐳
 
 Testing: Pytest, Requests ✅
 
-Estructura del Proyecto 📂
+**Estructura del Proyecto** 📂
 mi_proyecto/
 ├── .venv/                   
 ├── app_streamlit/           
@@ -75,8 +75,8 @@ mi_proyecto/
 ├── requirements.txt         
 └── test_api.py              
 
-Configuración del Entorno ⚙️
-1. Requisitos Previos ✅
+## **Configuración del Entorno** ⚙️
+### **1. Requisitos Previos** ✅
 Asegúrate de tener instalados los siguientes componentes:
 
 Python 3.8+: Descargar Python 🐍
@@ -89,10 +89,10 @@ pgAdmin 4 (Opcional): Para gestionar la DB. Descargar pgAdmin 📊
 
 Thunder Client (extensión de VS Code) o Postman (Opcional): Para probar la API. ⚡
 
-2. Archivo .env 🔑
+### **2. Archivo .env*** 🔑
 Crea un archivo llamado .env en la raíz de la carpeta mi_proyecto con el siguiente contenido. Es crucial que uses tus propias credenciales y claves API.
 
-3. Entorno Virtual de Python 🌳
+### **3. Entorno Virtual de Python** 🌳
 Se recomienda encarecidamente usar un entorno virtual para gestionar las dependencias.
 
 Abre tu terminal en la raíz del proyecto (mi_proyecto). 💻
@@ -113,7 +113,7 @@ Instala las dependencias del proyecto:
 pip install -r requirements.txt
 pip install pytest # Asegúrate de que pytest esté instalado para los tests
 
-4. Configuración de la Base de Datos PostgreSQL 🗄️
+### **4. Configuración de la Base de Datos PostgreSQL** 🗄️
 Si usas Docker Compose, la base de datos se configurará automáticamente. Si usas una base de datos en la nube (ej. Render.com), asegúrate de que tu .env apunte a sus credenciales.
 
 Para crear las tablas designers y llm_interactions_log (si no existen), conéctate a tu base de datos (local o remota) usando pgAdmin y ejecuta las siguientes consultas SQL:
@@ -146,10 +146,10 @@ CREATE TABLE llm_interactions_log (
     ip_address VARCHAR(45)
 );
 
-5. Ejecución de la Aplicación ▶️
+### **5. Ejecución de la Aplicación** ▶️
 Puedes ejecutar la aplicación de dos maneras: localmente (para desarrollo rápido) o usando Docker Compose (recomendado para un entorno de desarrollo/producción más consistente).
 
-5.1. Ejecución Local (sin Docker Compose) 🏠
+## **5.1. Ejecución Local (sin Docker Compose)** 🏠
 Iniciar la API de Flask: 🌐
 
 Abre una terminal en la raíz del proyecto (mi_proyecto).
@@ -172,7 +172,7 @@ Ejecuta: streamlit run app_streamlit.py
 
 Streamlit se abrirá en tu navegador (normalmente http://localhost:8501).
 
-5.2. Ejecución con Docker Compose (Recomendado) 🐳
+## **5.2. Ejecución con Docker Compose (Recomendado)** 🐳
 Asegúrate de que Docker Desktop esté en ejecución.
 
 Abre tu terminal en la raíz del proyecto (mi_proyecto). 💻
@@ -197,7 +197,7 @@ Para eliminar también los datos de la base de datos (volumen db_data):
 
 docker-compose down -v
 
-6. Endpoints de la API (Flask) 🔗
+### **6. Endpoints de la API (Flask)** 🔗
 La API expone los siguientes puntos de acceso:
 
 GET /: Mensaje de bienvenida. 👋
@@ -214,7 +214,7 @@ POST /generate_text: Genera texto con IA (requiere JSON {"prompt": "..."} en el 
 
 GET /logs: Obtiene el historial de interacciones con la IA. 📜
 
-7. Testeo del Código ✅
+### **7. Testeo del Código** ✅
 Los tests unitarios y de integración para la API están definidos en test_api.py y utilizan pytest.
 
 Abre una terminal en la raíz del proyecto (mi_proyecto). 💻
@@ -227,7 +227,7 @@ Ejecuta los tests:
 
 pytest
 
-8. Solución de Problemas Comunes ❓
+### **8. Solución de Problemas Comunes** ❓
 ModuleNotFoundError / pytest no reconocido: Asegúrate de que el entorno virtual esté activado ((.venv) en el prompt) y que todas las dependencias estén instaladas (pip install -r requirements.txt y pip install pytest). ❌
 
 500 INTERNAL SERVER ERROR en la API: Revisa la terminal donde se ejecuta app.py para ver el error detallado de Python/PostgreSQL. Verifica credenciales de DB y que la DB esté activa y accesible. 🚨
