@@ -1,0 +1,50 @@
+version: '3.8' # Versión de Docker Compose
+
+services:
+  # Servicio para la base de datos PostgreSQL
+  db:
+    image: postgres:17.5-alpine3.20 # Usa una imagen oficial de PostgreSQL, -alpine es más ligera
+    container_name: postgres_db_container # Nombre descriptivo para el contenedor de la DB
+    environment:
+      # Variables de entorno para PostgreSQL. ¡Asegúrate de que coincidan con tu .env local!
+      POSTGRES_DB: ${DB_NAME} # Lee DB_NAME del .env del docker-compose
+      POSTGRES_USER: ${DB_USER} # Lee DB_USER del .env del docker-compose
+      POSTGRES_PASSWORD: ${DB_PASSWORD} # Lee DB_PASSWORD del .env del docker-compose
+    ports:
+      - "5432:5432" # Mapea el puerto 5432 del host al puerto 5432 del contenedor
+    volumes:
+      # Persistencia de datos: Guarda los datos de la DB en un volumen nombrado
+      - db_data:/var/lib/postgresql/data
+    healthcheck: # Comprobación de salud para asegurar que la DB está lista
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Servicio para tu aplicación Flask
+  app:
+    build: . # Docker Compose buscará el Dockerfile en el directorio actual (mi_proyecto)
+    container_name: flask_app_container # Nombre descriptivo para el contenedor de la app
+    ports:
+      - "5000:5000" # Mapea el puerto 5000 del host al puerto 5000 del contenedor
+    environment:
+      # Pasa las variables de entorno a tu aplicación Flask dentro del contenedor
+      # El host de la DB será el nombre del servicio 'db' dentro de la red de Docker Compose
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db # ¡Importante! Usa el nombre del servicio de la DB como host
+      DB_PORT: 5432
+      GROQ_API_KEY: ${GROQ_API_KEY} # Pasa la clave API de Groq
+    depends_on:
+      # Asegura que el servicio 'db' se inicie y esté saludable antes que 'app'
+      db:
+        condition: service_healthy
+    # Opcional: Montar el código fuente para desarrollo (hot-reloading)
+    # - "./:/app" # Descomenta para desarrollo si quieres que los cambios en el código se reflejen sin reconstruir la imagen
+    # command: sh -c "flask run --host=0.0.0.0 --port=5000" # Si usas Flask CLI
+    # command: python app.py # Si tu CMD en Dockerfile ya es python app.py
+
+# Volúmenes para persistencia de datos
+volumes:
+  db_data: # Define el volumen para los datos de PostgreSQL
