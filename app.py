@@ -39,7 +39,7 @@ def get_db_connection():
     try:
         if DB_URL:
             # Si DATABASE_URL está configurada, la usamos directamente
-            conn = psycopg2.connect(DATABASE_URL)
+            conn = psycopg2.connect(DB_URL)
             app.logger.info("Conexión a la base de datos exitosa usando DATABASE_URL!")
         else:
             # Si no hay DATABASE_URL, usamos las variables individuales
