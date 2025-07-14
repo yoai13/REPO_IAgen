@@ -48,7 +48,7 @@ def main():
         if search_input:
             st.info(f"Buscando diseñadores que coincidan con: *'{search_input}'*")
             designers = fetch_designers(search_query=search_input)
-            if designers:
+            if designers is not None: # Cambiado de 'if designers:' a 'if designers is not None:' para manejar listas vacías
                 if designers:
                     st.success(f"Se encontraron {len(designers)} diseñadores:")
                     for designer in designers:
@@ -65,9 +65,15 @@ def main():
     st.subheader("Todos los Diseñadores (o resultados de la última búsqueda)")
     # Muestra todos los diseñadores al inicio o después de una búsqueda vacía
     all_designers = fetch_designers() # Llama sin query para obtener todos
-    if all_designers:
-        for designer in all_designers:
-            display_designer(designer)
+    if all_designers is not None: # Cambiado de 'if all_designers:' a 'if all_designers is not None:'
+        if all_designers: # Para mostrar el mensaje de "No hay diseñadores" si la lista está vacía pero la API funciona
+            for designer in all_designers:
+                display_designer(designer)
+        else:
+            st.info("No hay diseñadores para mostrar. La base de datos puede estar vacía.")
     else:
-        st.info("No hay diseñadores para mostrar. Asegúrate de que la base de datos tenga datos y la API funcione.")
+        st.info("No hay diseñadores para mostrar. Asegúrate de que la API de Flask funcione y la base de datos tenga datos.")
 
+
+if __name__ == "__main__":
+    main()
