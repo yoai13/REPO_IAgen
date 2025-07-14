@@ -140,6 +140,7 @@ def search_designers():
         return jsonify(designers)
     except Exception as e:
         print(f"Error al buscar diseñadores: {e}")
+        print(traceback.format_exc())
         return jsonify({"error": "No se pudo realizar la búsqueda"}), 500
     finally:
         if conn:
