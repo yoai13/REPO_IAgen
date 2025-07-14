@@ -5,6 +5,7 @@ from psycopg2 import extras
 from dotenv import load_dotenv
 from groq import Groq
 import traceback
+from psycopg2 import extras
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -47,7 +48,8 @@ def get_db_connection():
         print("INFO: ¡Conexión a la base de datos exitosa!")
         return conn
     except Exception as e:
-        print(f"Error al conectar a la base de datos: {e}")
+        print(f"ERROR: Fallo al conectar a la base de datos: {e}")
+        print(traceback.format_exc()) # <-- ESTA LÍNEA ES LA CLAVE
         raise
 
 def log_llm_interaction(prompt, response, model, ip_address):
