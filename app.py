@@ -1,14 +1,13 @@
 import os
 from flask import Flask, request, jsonify
 import psycopg2
-from psycopg2 import extras
+from psycopg2 import extras # Mantener solo esta
 from dotenv import load_dotenv
 from groq import Groq
-import traceback
-from psycopg2 import extras
+import traceback # Importación necesaria para traceback.format_exc()
 
 app = Flask(__name__)
-app.config["DEBUG"] = True
+app.config["DEBUG"] = True # Mantener en True para ver el debugger en logs de desarrollo
 
 # Cargar las variables de entorno del archivo .env
 load_dotenv()
@@ -24,18 +23,18 @@ DB_PORT = os.getenv('DB_PORT')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 # Inicializo el cliente de Groq
-
 if GROQ_API_KEY:
     groq_client = Groq(api_key=GROQ_API_KEY)
 else:
-    print("WARNING: GROQ_API_KEY no está configurada. La integración con Groq no funcionará.")
+    # Usar app.logger.warning para mensajes de advertencia en Flask
+    app.logger.warning("GROQ_API_KEY no está configurada. La integración con Groq no funcionará.")
     groq_client = None # Para evitar errores si la clave no está presente
 
 def get_db_connection():
     """
     Establece y devuelve una conexión a la base de datos PostgreSQL.
-    Configura el cursor para devolver diccionarios.
     """
+    conn = None # Inicializar conn para el bloque finally
     try:
         conn = psycopg2.connect(
             dbname=DB_NAME,
@@ -44,13 +43,21 @@ def get_db_connection():
             host=DB_HOST,
             port=DB_PORT
         )
-        conn.cursor().execute("SELECT 1;") # Intenta una operación simple
-        print("INFO: ¡Conexión a la base de datos exitosa!")
+        # Ejecutar una consulta simple para verificar la conexión
+        cur = conn.cursor()
+        cur.execute("SELECT 1;")
+        cur.close()
+        app.logger.info("Conexión a la base de datos exitosa!") # Usar app.logger.info
         return conn
     except Exception as e:
-        print(f"ERROR: Fallo al conectar a la base de datos: {e}")
-        print(traceback.format_exc()) # <-- ESTA LÍNEA ES LA CLAVE
-        raise
+        # Usar app.logger.error para los errores
+        app.logger.error(f"Fallo al conectar a la base de datos: {e}")
+        app.logger.error(traceback.format_exc()) # Imprimir el traceback completo
+        raise # Re-lanzar la excepción para que sea capturada por la ruta llamante
+    finally:
+        # Asegurarse de que la conexión se cierre si se abrió y no se re-lanzó
+        # (Aunque el raise lo evita, es buena práctica)
+        pass # El finally de la ruta llamante cerrará la conexión
 
 def log_llm_interaction(prompt, response, model, ip_address):
     """
@@ -67,11 +74,12 @@ def log_llm_interaction(prompt, response, model, ip_address):
         cur.execute(sql_insert_log, (prompt, response, model, ip_address))
         conn.commit()
         cur.close()
-        print(f"Interacción LLM registrada: Prompt '{prompt[:50]}...'")
+        app.logger.info(f"Interacción LLM registrada: Prompt '{prompt[:50]}...'") # Usar app.logger.info
     except Exception as e:
         if conn:
             conn.rollback()
-        print(f"ERROR: No se pudo registrar la interacción LLM en la base de datos: {e}")
+        app.logger.error(f"No se pudo registrar la interacción LLM en la base de datos: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback aquí también
     finally:
         if conn:
             conn.close()
@@ -85,15 +93,15 @@ def get_designers():
     conn = None
     try:
         conn = get_db_connection()
-        # Usamos RealDictCursor para obtener filas como diccionarios, más fácil de manejar
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT id, name, nationality, style, famous_works, website FROM designers;")
         designers = cur.fetchall()
         cur.close()
         return jsonify(designers)
     except Exception as e:
-        print(f"Error al obtener diseñadores: {e}")
-        return jsonify({"error": "No se pudieron obtener los diseñadores"}), 500
+        app.logger.error(f"Error al obtener diseñadores: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
+        return jsonify({"error": "No se pudieron obtener los diseñadores", "details": str(e)}), 500
     finally:
         if conn:
             conn.close()
@@ -112,8 +120,9 @@ def get_designer_by_id(designer_id):
         else:
             return jsonify({"message": "Diseñador no encontrado"}), 404
     except Exception as e:
-        print(f"Error al obtener diseñador por ID: {e}")
-        return jsonify({"error": "No se pudo obtener el diseñador"}), 500
+        app.logger.error(f"Error al obtener diseñador por ID: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
+        return jsonify({"error": "No se pudo obtener el diseñador", "details": str(e)}), 500
     finally:
         if conn:
             conn.close()
@@ -139,9 +148,9 @@ def search_designers():
         cur.close()
         return jsonify(designers)
     except Exception as e:
-        print(f"Error al buscar diseñadores: {e}")
-        print(traceback.format_exc())
-        return jsonify({"error": "No se pudo realizar la búsqueda"}), 500
+        app.logger.error(f"Error al buscar diseñadores: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
+        return jsonify({"error": "No se pudo realizar la búsqueda", "details": str(e)}), 500
     finally:
         if conn:
             conn.close()
@@ -150,16 +159,12 @@ def search_designers():
 def add_designer():
     conn = None
     try:
-        # Obtengo los datos del diseñador del cuerpo de la solicitud JSON
         new_designer_data = request.get_json()
-
-        # Valido que los campos necesarios estén presentes
         required_fields = ['name', 'nationality', 'style', 'famous_works', 'website']
-        for field in required_fields: 
+        for field in required_fields:
             if field not in new_designer_data:
                 return jsonify({"error": f"Falta el campo '{field}'"}), 400
 
-        # Extrae los datos
         name = new_designer_data['name']
         nationality = new_designer_data['nationality']
         style = new_designer_data['style']
@@ -167,23 +172,16 @@ def add_designer():
         website = new_designer_data['website']
 
         conn = get_db_connection()
-        cur = conn.cursor() 
-
-        # Construyo y ejecuto la consulta SQL para insertar los datos
+        cur = conn.cursor()
         sql_insert_query = """
             INSERT INTO designers (name, nationality, style, famous_works, website)
             VALUES (%s, %s, %s, %s, %s) RETURNING id;
         """
         cur.execute(sql_insert_query, (name, nationality, style, famous_works, website))
-
-        # Obtengo el ID del diseñador recién insertado
         new_designer_id = cur.fetchone()[0]
-
-        # Confirma la transacción
         conn.commit()
         cur.close()
 
-        # Devuelve una respuesta exitosa
         return jsonify({
             "message": "Diseñador añadido con éxito",
             "id": new_designer_id,
@@ -191,13 +189,14 @@ def add_designer():
         }), 201
 
     except psycopg2.Error as db_err:
-        conn.rollback()
-        print(f"Error de base de datos al añadir diseñador: {db_err}")
+        if conn: conn.rollback()
+        app.logger.error(f"Error de base de datos al añadir diseñador: {db_err}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
         return jsonify({"error": "Error de base de datos al añadir diseñador", "details": str(db_err)}), 500
     except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"Error inesperado al añadir diseñador: {e}")
+        if conn: conn.rollback()
+        app.logger.error(f"Error inesperado al añadir diseñador: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
         return jsonify({"error": "No se pudo añadir el diseñador", "details": str(e)}), 500
     finally:
         if conn:
@@ -205,11 +204,6 @@ def add_designer():
 
 @app.route('/generate_text', methods=['POST'])
 def generate_text_with_llm():
-    """
-    Endpoint para generar texto usando un LLM (Groq).
-    Recibe un prompt en el cuerpo de la solicitud JSON.
-    Registra la interacción en la base de datos.
-    """
     if not groq_client:
         return jsonify({"error": "La integración con Groq no está configurada. Falta GROQ_API_KEY."}), 503
 
@@ -220,56 +214,40 @@ def generate_text_with_llm():
         if not prompt:
             return jsonify({"error": "Parámetro 'prompt' requerido en el cuerpo de la solicitud."}), 400
 
-        # Obtener la IP del cliente (para el registro)
-        # request.remote_addr puede ser None en algunos entornos de proxy,
-        # request.headers.get('X-Forwarded-For') es más robusto en producción
         ip_address = request.remote_addr or request.headers.get('X-Forwarded-For', 'N/A')
-
-        # Llamada a la API de Groq
-        model_name = "llama3-8b-8192" # Define el modelo aquí
+        model_name = "llama3-8b-8192"
         chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
+            messages=[{"role": "user", "content": prompt}],
             model=model_name,
         )
-
         llm_response = chat_completion.choices[0].message.content
-
-        # Registrar la interacción en la base de datos
         log_llm_interaction(prompt, llm_response, model_name, ip_address)
-
         return jsonify({"generated_text": llm_response})
 
     except Exception as e:
-        print(f"Error al generar texto con Groq: {e}")
+        app.logger.error(f"Error al generar texto con Groq: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
         return jsonify({"error": "No se pudo generar texto con el LLM", "details": str(e)}), 500
 
-# Endpoint para obtener el historial de interacciones LLM
 @app.route('/logs', methods=['GET'])
 def get_llm_logs():
-    """
-    Obtiene el historial de interacciones del LLM de la base de datos.
-    """
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        # Ordena por timestamp descendente para ver los más recientes primero
         cur.execute("SELECT id, user_prompt, llm_response, model_used, timestamp, ip_address FROM llm_interactions_log ORDER BY timestamp DESC;")
         logs = cur.fetchall()
         cur.close()
         return jsonify(logs)
     except Exception as e:
-        print(f"Error al obtener logs de interacciones LLM: {e}")
-        return jsonify({"error": "No se pudieron obtener los logs de interacciones LLM"}), 500
+        app.logger.error(f"Error al obtener logs de interacciones LLM: {e}") # Usar app.logger.error
+        app.logger.error(traceback.format_exc()) # Añadir traceback
+        return jsonify({"error": "No se pudieron obtener los logs de interacciones LLM", "details": str(e)}), 500
     finally:
         if conn:
             conn.close()
 
-
-if __name__ == '__main__': 
-    app.run(debug=True, host='0.0.0.0', port=5000) # Añadido host y port para fácil acceso
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
