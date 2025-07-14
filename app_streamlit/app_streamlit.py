@@ -71,5 +71,3 @@ def main():
     else:
         st.info("No hay diseñadores para mostrar. Asegúrate de que la base de datos tenga datos y la API funcione.")
 
-if __name__ == "__main__":
-    main()

@@ -11,3 +11,5 @@ __pycache__/
 
 # Caché de Pytest
 .pytest_cache/
+
+mi_proyecto-app.tar
