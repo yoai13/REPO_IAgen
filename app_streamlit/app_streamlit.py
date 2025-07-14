@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # URL de tu API de Flask
-FLASK_API_URL = "http://localhost:5000"
+FLASK_API_URL = "https://repo-iagen-1.onrender.com"
 
 st.set_page_config(page_title="Catálogo de Diseñadores de Moda", layout="wide")
 
