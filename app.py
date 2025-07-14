@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2 import extras
 from dotenv import load_dotenv
 from groq import Groq
+import traceback
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -42,6 +43,8 @@ def get_db_connection():
             host=DB_HOST,
             port=DB_PORT
         )
+        conn.cursor().execute("SELECT 1;") # Intenta una operación simple
+        print("INFO: ¡Conexión a la base de datos exitosa!")
         return conn
     except Exception as e:
         print(f"Error al conectar a la base de datos: {e}")
