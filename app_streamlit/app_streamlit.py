@@ -67,6 +67,32 @@ def main():
     st.title("👗 Catálogo de Diseñadores de Moda y Generador de Texto con IA 👖")
     st.write("Explora información sobre diseñadores famosos o genera texto creativo con un modelo de IA.")
 
+    # --- Sección de Generación de Texto con LLM ---
+    st.header("Generador de Texto con IA")
+    st.write("Introduce un 'prompt' y el modelo de IA generará texto para ti.")
+
+    llm_prompt = st.text_area("Introduce tu prompt aquí:", "Pon aquí tu pregunta sobre moda.")
+    llm_max_length = st.slider("Longitud máxima del texto generado:", min_value=50, max_value=500, value=200, step=10)
+
+    if st.button("Generar Texto"):
+        if llm_prompt:
+            with st.spinner("Generando texto..."):
+                generated_data = generate_text_with_llm_api(llm_prompt, llm_max_length)
+
+            if generated_data:
+                if "generated_text" in generated_data:
+                    st.subheader("Texto Generado:")
+                    st.info(generated_data["generated_text"])
+                else:
+                    st.error("La API no devolvió el campo 'generated_text' esperado.")
+                    st.json(generated_data) # Muestra la respuesta completa para depuración
+            else:
+                st.warning("No se pudo generar texto. Revisa los logs de la API de Flask.")
+        else:
+            st.warning("Por favor, introduce un prompt para generar texto.")
+
+    st.markdown("---") # Separador para separar secciones
+
     # --- Sección de Catálogo de Diseñadores ---
     st.header("Catálogo de Diseñadores de Moda")
     st.write("Explora información sobre diseñadores famosos o busca uno en particular.")
@@ -103,32 +129,6 @@ def main():
             st.info("No hay diseñadores para mostrar. La base de datos puede estar vacía.")
     else:
         st.info("No hay diseñadores para mostrar. Asegúrate de que la API de Flask funcione y la base de datos tenga datos.")
-
-    st.markdown("---") # Separador para separar secciones
-
-    # --- Sección de Generación de Texto con LLM ---
-    st.header("Generador de Texto con IA")
-    st.write("Introduce un 'prompt' y el modelo de IA generará texto para ti.")
-
-    llm_prompt = st.text_area("Introduce tu prompt aquí:", "Escribe una breve descripción de un futuro utópico.")
-    llm_max_length = st.slider("Longitud máxima del texto generado:", min_value=50, max_value=500, value=200, step=10)
-
-    if st.button("Generar Texto"):
-        if llm_prompt:
-            with st.spinner("Generando texto..."):
-                generated_data = generate_text_with_llm_api(llm_prompt, llm_max_length)
-
-            if generated_data:
-                if "generated_text" in generated_data:
-                    st.subheader("Texto Generado:")
-                    st.info(generated_data["generated_text"])
-                else:
-                    st.error("La API no devolvió el campo 'generated_text' esperado.")
-                    st.json(generated_data) # Muestra la respuesta completa para depuración
-            else:
-                st.warning("No se pudo generar texto. Revisa los logs de la API de Flask.")
-        else:
-            st.warning("Por favor, introduce un prompt para generar texto.")
 
 
 if __name__ == "__main__":
