@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # URL de tu API de Flask
-FLASK_API_URL = "https://repo-iagen-1.onrender.com"
+FLASK_API_URL = "https://repo-iagen-2.onrender.com" 
 
 st.set_page_config(page_title="Catálogo de Diseñadores de Moda", layout="wide")
 
@@ -48,7 +48,7 @@ def main():
         if search_input:
             st.info(f"Buscando diseñadores que coincidan con: *'{search_input}'*")
             designers = fetch_designers(search_query=search_input)
-            if designers is not None: # Cambiado de 'if designers:' a 'if designers is not None:' para manejar listas vacías
+            if designers is not None:
                 if designers:
                     st.success(f"Se encontraron {len(designers)} diseñadores:")
                     for designer in designers:
@@ -65,8 +65,8 @@ def main():
     st.subheader("Todos los Diseñadores (o resultados de la última búsqueda)")
     # Muestra todos los diseñadores al inicio o después de una búsqueda vacía
     all_designers = fetch_designers() # Llama sin query para obtener todos
-    if all_designers is not None: # Cambiado de 'if all_designers:' a 'if all_designers is not None:'
-        if all_designers: # Para mostrar el mensaje de "No hay diseñadores" si la lista está vacía pero la API funciona
+    if all_designers is not None:
+        if all_designers:
             for designer in all_designers:
                 display_designer(designer)
         else:
