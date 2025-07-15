@@ -1,10 +1,11 @@
 import streamlit as st
 import requests
+import json # Importar para manejar JSON en las solicitudes POST
 
 # URL de tu API de Flask
-FLASK_API_URL = "https://repo-iagen-2.onrender.com" 
+FLASK_API_URL = "https://repo-iagen-2.onrender.com"
 
-st.set_page_config(page_title="Catálogo de Diseñadores de Moda", layout="wide")
+st.set_page_config(page_title="Catálogo de Diseñadores de Moda y Generador de Texto", layout="wide")
 
 def fetch_designers(search_query=None):
     """Obtiene diseñadores de la API de Flask, opcionalmente con un término de búsqueda."""
@@ -20,7 +21,32 @@ def fetch_designers(search_query=None):
         st.error(f"No se pudo conectar con la API de Flask en {FLASK_API_URL}. Asegúrate de que esté ejecutándose.")
         return None
     except requests.exceptions.RequestException as e:
-        st.error(f"Error al comunicarse con la API: {e}")
+        st.error(f"Error al comunicarse con la API de diseñadores: {e}")
+        return None
+
+def generate_text_with_llm_api(prompt, max_length):
+    """
+    Envía una solicitud POST a la API de Flask para generar texto con el LLM.
+    """
+    endpoint = f"{FLASK_API_URL}/generate_text"
+    payload = {
+        "prompt": prompt,
+        "max_length": max_length
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+        # Realiza la solicitud POST con el cuerpo JSON
+        response = requests.post(endpoint, data=json.dumps(payload), headers=headers)
+        response.raise_for_status() # Lanza un error para códigos de estado HTTP 4xx/5xx
+        return response.json()
+    except requests.exceptions.ConnectionError:
+        st.error(f"No se pudo conectar con la API de Flask en {FLASK_API_URL}. Asegúrate de que esté ejecutándose.")
+        return None
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error al generar texto con el LLM: {e}")
         return None
 
 def display_designer(designer):
@@ -38,11 +64,15 @@ def display_designer(designer):
 
 
 def main():
-    st.title("👗 Catálogo de Diseñadores de Moda 👖")
+    st.title("👗 Catálogo de Diseñadores de Moda y Generador de Texto con IA 👖")
+    st.write("Explora información sobre diseñadores famosos o genera texto creativo con un modelo de IA.")
+
+    # --- Sección de Catálogo de Diseñadores ---
+    st.header("Catálogo de Diseñadores de Moda")
     st.write("Explora información sobre diseñadores famosos o busca uno en particular.")
 
     # Campo de búsqueda
-    search_input = st.text_input("Busca por nombre, nacionalidad o estilo:", "")
+    search_input = st.text_input("Busca diseñadores por nombre, nacionalidad o estilo:", "")
 
     if st.button("Buscar Diseñador"):
         if search_input:
@@ -73,6 +103,32 @@ def main():
             st.info("No hay diseñadores para mostrar. La base de datos puede estar vacía.")
     else:
         st.info("No hay diseñadores para mostrar. Asegúrate de que la API de Flask funcione y la base de datos tenga datos.")
+
+    st.markdown("---") # Separador para separar secciones
+
+    # --- Sección de Generación de Texto con LLM ---
+    st.header("Generador de Texto con IA")
+    st.write("Introduce un 'prompt' y el modelo de IA generará texto para ti.")
+
+    llm_prompt = st.text_area("Introduce tu prompt aquí:", "Escribe una breve descripción de un futuro utópico.")
+    llm_max_length = st.slider("Longitud máxima del texto generado:", min_value=50, max_value=500, value=200, step=10)
+
+    if st.button("Generar Texto"):
+        if llm_prompt:
+            with st.spinner("Generando texto..."):
+                generated_data = generate_text_with_llm_api(llm_prompt, llm_max_length)
+
+            if generated_data:
+                if "generated_text" in generated_data:
+                    st.subheader("Texto Generado:")
+                    st.info(generated_data["generated_text"])
+                else:
+                    st.error("La API no devolvió el campo 'generated_text' esperado.")
+                    st.json(generated_data) # Muestra la respuesta completa para depuración
+            else:
+                st.warning("No se pudo generar texto. Revisa los logs de la API de Flask.")
+        else:
+            st.warning("Por favor, introduce un prompt para generar texto.")
 
 
 if __name__ == "__main__":
